@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartSplineIcon, Plus, Search } from "lucide-react";
+import { EllipsisVertical, Plus, Search } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -25,7 +25,7 @@ const SidebarPage = () => {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="mb-6">
                     <SidebarMenuButton asChild>
                       <a href="#">
                         <div className="flex justify-center items-center bg-primary w-6 h-6 rounded-sm">
@@ -48,7 +48,7 @@ const SidebarPage = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className="mb-3">
                     <SidebarMenuButton asChild>
                       <a href="#">
                         <Plus />
@@ -69,15 +69,43 @@ const SidebarPage = () => {
               </SidebarGroupContent>
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>Recent Cases</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-[#94A3B8] font-bold tracking-[2px] text-[10px]">
+                RECENT CASES
+              </SidebarGroupLabel>
 
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton
+                      asChild
+                      className="rounded-xl mb-2 hover:bg-[#DCE4E8] flex justify-between items-center py-2 px-3"
+                    >
                       <a href="#">
-                        <ChartSplineIcon />
-                        <span>Content Performance</span>
+                        <span>BP/45/IV/2026/Reskrim</span>
+
+                        <EllipsisVertical />
+                      </a>
+                    </SidebarMenuButton>
+
+                    <SidebarMenuButton
+                      asChild
+                      className="rounded-xl mb-2 hover:bg-[#DCE4E8] flex justify-between items-center py-2 px-3"
+                    >
+                      <a href="#">
+                        <span>BP/45/IV/2026/Reskrim</span>
+
+                        <EllipsisVertical />
+                      </a>
+                    </SidebarMenuButton>
+
+                    <SidebarMenuButton
+                      asChild
+                      className="rounded-xl mb-2 hover:bg-[#DCE4E8] flex justify-between items-center py-2 px-3"
+                    >
+                      <a href="#">
+                        <span>BP/45/IV/2026/Reskrim</span>
+
+                        <EllipsisVertical />
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
