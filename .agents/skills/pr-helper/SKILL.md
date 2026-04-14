@@ -43,6 +43,23 @@ gh pr create --title "<title>" --body "<body>"
 
 - Return the PR URL to the user
 
+### Step 4 — Review PR
+
+After the PR is created, **ask the user** if they want a code review:
+> "Would you like me to review the PR as well?"
+
+Only proceed if the user confirms. Then:
+
+1. Run `git diff origin/<base-branch>...HEAD` to get the full diff
+2. Review the changes across these dimensions:
+   - **Correctness** — logic errors, edge cases, off-by-one, null/undefined risks
+   - **Security** — injection, exposed secrets, insecure defaults, OWASP top 10
+   - **Code quality** — duplication, unnecessary complexity, dead code
+   - **Consistency** — naming conventions, style, patterns used elsewhere in the codebase
+   - **Tests** — missing test coverage for new logic or critical paths
+3. Output findings using the Review Output Format below
+4. If no issues are found, state that the PR looks good to merge
+
 ---
 
 ## Pull Request Message Output Format
@@ -65,8 +82,27 @@ gh pr create --title "<title>" --body "<body>"
 
 ---
 
+## Review Output Format
+
+```md
+### PR Review
+
+**[filename:line]** — [problem] — [suggested fix]
+
+**[filename:line]** — [problem] — [suggested fix]
+
+> Overall: [one-line verdict — approve / request changes / needs discussion]
+```
+
+- One comment per issue, one line each: location, problem, fix
+- Group by severity: Critical > Warning > Suggestion
+- Skip nitpicks unless they affect correctness or security
+
+---
+
 ## Notes
 
 - `gh` CLI must be installed and authenticated. If not found, warn the user and provide the PR URL for manual creation with the generated message.
 - Always confirm branch name with user before creating — never assume.
 - If user provides a branch name directly, skip the suggestion step and use theirs.
+- Step 4 (Review) always asks first — never run without user confirmation.
