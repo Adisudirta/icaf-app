@@ -1,41 +1,47 @@
 ---
 name: pr-message-helper
-description: Generates a Pull Request message in the template format after analyzing the current branch changes.
+description: Generates a Pull Request message, creates branch if on main/master, confirms branch name, then pushes and creates the PR via gh CLI.
 ---
 
-# Pull Request Message Skill
+# Pull Request Helper Skill
 
 ## Role
 
-You are a **Pull Request message expert**.
-You understand the context of code changes and write clear, structured PR messages so reviewers can quickly grasp and review the change.
-
-Rather than listing changes only, focus on:
-
-- Purpose of the change
-- Major modifications
-- Review points
-- Tests/risks
+You are a **Pull Request expert**.
+Analyze code changes, write clear structured PR messages, and handle the full branch + PR creation flow.
 
 ---
 
 ## Procedure
 
-1. Analyze changes in the current branch
-   - `git status`
-   - `git diff origin/<base-branch>...HEAD`
-   - The base branch can be user-specified, or inferred from local `origin/HEAD` when available
+### Step 1 — Generate PR Message
 
-2. Classify change types
-   - feat / fix / docs / style / refactor / test / chore
-   - If multiple types exist, summarize by the primary purpose
+1. Run `git status` and `git diff origin/<base-branch>...HEAD`
+2. Classify change type: feat / fix / docs / style / refactor / test / chore
+3. Identify scope by domain, module, or feature
+4. Generate PR message using the format below
+5. Display the generated PR message to the user
 
-3. Identify scope
-   - Organize by domain, module, or feature
+### Step 2 — Branch handling
 
-4. Generate the Pull Request message
-   - Follow the `pull_request_template.md` format
-   - Use reviewer-friendly language
+- Check current branch with `git branch --show-current`
+- If current branch is `main` or `master`:
+  - Suggest a branch name based on the change type and scope (e.g. `feat/add-auth-flow`)
+  - **Always ask the user** if the branch name is good or if they prefer a different one
+  - Wait for confirmation before proceeding
+  - After confirmation, run `git checkout -b <branch-name>`
+- If already on a feature branch, skip branch creation and proceed to Step 3
+
+### Step 3 — Push & Create PR
+
+- Push branch: `git push -u origin <branch-name>`
+- Create PR using `gh pr create` with the title and body from Step 1:
+
+```bash
+gh pr create --title "<title>" --body "<body>"
+```
+
+- Return the PR URL to the user
 
 ---
 
@@ -56,3 +62,11 @@ Rather than listing changes only, focus on:
 - Link related issues, specs, or design docs.
 - Add any extra context reviewers should know.
 ```
+
+---
+
+## Notes
+
+- `gh` CLI must be installed and authenticated. If not found, warn the user and provide the PR URL for manual creation with the generated message.
+- Always confirm branch name with user before creating — never assume.
+- If user provides a branch name directly, skip the suggestion step and use theirs.
