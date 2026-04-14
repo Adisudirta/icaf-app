@@ -45,7 +45,10 @@ gh pr create --title "<title>" --body "<body>"
 
 ### Step 4 — Review PR
 
-After the PR is created, perform a code review on the diff:
+After the PR is created, **ask the user** if they want a code review:
+> "Would you like me to review the PR as well?"
+
+Only proceed if the user confirms. Then:
 
 1. Run `git diff origin/<base-branch>...HEAD` to get the full diff
 2. Review the changes across these dimensions:
@@ -56,6 +59,16 @@ After the PR is created, perform a code review on the diff:
    - **Tests** — missing test coverage for new logic or critical paths
 3. Output findings using the Review Output Format below
 4. If no issues are found, state that the PR looks good to merge
+5. Ask the user: **"Would you like me to post this review as inline comments on GitHub?"**
+   - If yes: get the latest commit SHA with `git rev-parse HEAD`, then post inline comments via:
+     ```bash
+     gh api repos/<owner>/<repo>/pulls/<pr-number>/reviews \
+       --method POST \
+       --input review.json
+     ```
+     Where `review.json` contains `commit_id`, `body`, `event: "COMMENT"`, and `comments[]` with `path`, `line`, `side: "RIGHT"`, and `body` for each finding.
+   - Note: GitHub does not allow "request changes" on your own PRs — use `"event": "COMMENT"` instead.
+   - If no: leave the review as a text response only.
 
 ---
 
@@ -102,4 +115,4 @@ After the PR is created, perform a code review on the diff:
 - `gh` CLI must be installed and authenticated. If not found, warn the user and provide the PR URL for manual creation with the generated message.
 - Always confirm branch name with user before creating — never assume.
 - If user provides a branch name directly, skip the suggestion step and use theirs.
-- Step 4 (Review) runs automatically after PR creation unless the user opts out.
+- Step 4 (Review) always asks first — never run without user confirmation.

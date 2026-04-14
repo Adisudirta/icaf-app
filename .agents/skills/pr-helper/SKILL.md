@@ -59,6 +59,16 @@ Only proceed if the user confirms. Then:
    - **Tests** — missing test coverage for new logic or critical paths
 3. Output findings using the Review Output Format below
 4. If no issues are found, state that the PR looks good to merge
+5. Ask the user: **"Would you like me to post this review as inline comments on GitHub?"**
+   - If yes: get the latest commit SHA with `git rev-parse HEAD`, then post inline comments via:
+     ```bash
+     gh api repos/<owner>/<repo>/pulls/<pr-number>/reviews \
+       --method POST \
+       --input review.json
+     ```
+     Where `review.json` contains `commit_id`, `body`, `event: "COMMENT"`, and `comments[]` with `path`, `line`, `side: "RIGHT"`, and `body` for each finding.
+   - Note: GitHub does not allow "request changes" on your own PRs — use `"event": "COMMENT"` instead.
+   - If no: leave the review as a text response only.
 
 ---
 
