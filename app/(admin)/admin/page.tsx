@@ -1,14 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, X, CheckCircle } from "lucide-react";
+import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 type UploadedFile = {
   id: string;
   name: string;
   size: number;
+  file: File;
   status: "pending" | "uploading" | "done" | "error";
+  errorMessage?: string;
 };
 
 function formatBytes(bytes: number) {
@@ -28,6 +30,7 @@ export default function AdminPage() {
       id: crypto.randomUUID(),
       name: f.name,
       size: f.size,
+      file: f,
       status: "pending",
     }));
     setFiles((prev) => [...prev, ...next]);
@@ -53,14 +56,31 @@ export default function AdminPage() {
       )
     );
 
-    // TODO: POST files to RAG ingestion endpoint
-    await new Promise((r) => setTimeout(r, 1200));
+    const formData = new FormData();
+    pending.forEach((f) => formData.append("files", f.file));
 
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.status === "uploading" ? { ...f, status: "done" } : f
-      )
-    );
+    try {
+      const res = await fetch("/api/rag/ingest", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.status === "uploading" ? { ...f, status: "done" } : f
+        )
+      );
+    } catch {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.status === "uploading"
+            ? { ...f, status: "error", errorMessage: "Upload failed" }
+            : f
+        )
+      );
+    }
   }
 
   const hasPending = files.some((f) => f.status === "pending");
@@ -118,15 +138,23 @@ export default function AdminPage() {
                 <p className="text-xs text-muted-foreground">{formatBytes(f.size)}</p>
               </div>
               {f.status === "uploading" && (
-                <span className="text-xs text-muted-foreground">Uploading…</span>
+                <span className="text-xs text-muted-foreground animate-pulse">
+                  Processing…
+                </span>
               )}
               {f.status === "done" && (
                 <CheckCircle className="size-4 text-green-500 shrink-0" />
               )}
+              {f.status === "error" && (
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="size-4 text-destructive shrink-0" />
+                  <span className="text-xs text-destructive">{f.errorMessage}</span>
+                </div>
+              )}
               {(f.status === "pending" || f.status === "error") && (
                 <button
                   onClick={() => removeFile(f.id)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors ml-1"
                 >
                   <X className="size-4" />
                 </button>

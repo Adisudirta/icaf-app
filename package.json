@@ -13,14 +13,18 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.55",
     "@hookform/resolvers": "^5.2.2",
     "@neondatabase/serverless": "^1.1.0",
+    "@pinecone-database/pinecone": "^7.2.0",
+    "ai": "^6.0.172",
     "better-auth": "^1.6.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "pdf-parse": "^2.4.5",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -32,6 +36,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",

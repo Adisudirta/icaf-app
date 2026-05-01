@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronDown } from "lucide-react";
@@ -204,6 +205,7 @@ interface LegalCaseFormProps {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -228,9 +230,15 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   const handleFormSubmit: SubmitHandler<LegalCaseFormValues> = async (data) => {
     if (onSubmit) {
       await onSubmit(data);
-    } else {
-      alert("Form submitted!\n\n" + JSON.stringify(data, null, 2));
+      return;
     }
+    const res = await fetch("/api/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const { caseId } = await res.json();
+    router.push(`/analysis?caseId=${caseId}`);
   };
 
   return (

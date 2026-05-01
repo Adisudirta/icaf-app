@@ -1,4 +1,6 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
+// ── Auth tables (better-auth) ──────────────────────────────────────────────────
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -48,4 +50,45 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+// ── RAG: documents ─────────────────────────────────────────────────────────────
+
+export const documents = pgTable("documents", {
+  id: text("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  chunkCount: integer("chunk_count").notNull().default(0),
+  uploadedAt: timestamp("uploaded_at").$defaultFn(() => new Date()).notNull(),
+});
+
+export const documentChunks = pgTable("document_chunks", {
+  id: text("id").primaryKey(), // also used as Pinecone vector ID
+  documentId: text("document_id")
+    .notNull()
+    .references(() => documents.id, { onDelete: "cascade" }),
+  chunkIndex: integer("chunk_index").notNull(),
+  content: text("content").notNull(),
+});
+
+// ── Cases ──────────────────────────────────────────────────────────────────────
+
+export const cases = pgTable("cases", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  caseNumber: text("case_number").notNull(),
+  incidentDate: text("incident_date").notNull(),
+  investigatingOfficer: text("investigating_officer").notNull(),
+  incidentLocation: text("incident_location").notNull(),
+  incidentType: text("incident_type").notNull(),
+  threatLevel: text("threat_level").notNull(),
+  victimAction: text("victim_action").notNull(),
+  suspectCondition: text("suspect_condition").notNull(),
+  victimCondition: text("victim_condition").notNull(),
+  context: text("context").notNull(),
+  analysisText: text("analysis_text"),
+  documentText: text("document_text"),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
 });
