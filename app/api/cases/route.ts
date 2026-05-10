@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
 import { z } from "zod";
@@ -17,7 +17,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request): Promise<Response> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getServerSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const body = await request.json();
@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<Response> {
   const caseId = crypto.randomUUID();
   await db.insert(cases).values({
     id: caseId,
-    userId: session.user.id,
+    userId: session.uid,
     ...parsed.data,
   });
 

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
 import { openai, AI_MODEL } from "@/lib/ai";
@@ -11,7 +11,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ caseId: string }> }
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getServerSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { caseId } = await params;
@@ -19,7 +19,7 @@ export async function POST(
   const [caseRow] = await db
     .select()
     .from(cases)
-    .where(and(eq(cases.id, caseId), eq(cases.userId, session.user.id)))
+    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid)))
     .limit(1);
 
   if (!caseRow) return new Response("Not found", { status: 404 });

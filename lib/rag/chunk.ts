@@ -1,5 +1,3 @@
-import pdfParse from "pdf-parse";
-
 export interface Chunk {
   content: string;
   index: number;
@@ -9,7 +7,9 @@ const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 150;
 
 export async function extractAndChunkPdf(buffer: Buffer): Promise<Chunk[]> {
-  const { text } = await pdfParse(buffer);
+  const { extractText } = await import("unpdf");
+  const { text } = await extractText(new Uint8Array(buffer), { mergePages: true });
+  console.log(`[chunk] extracted ${text.length} chars from PDF`);
   return chunkText(text);
 }
 

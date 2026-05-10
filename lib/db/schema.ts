@@ -74,9 +74,7 @@ export const documentChunks = pgTable("document_chunks", {
 
 export const cases = pgTable("cases", {
   id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(), // Firebase UID — no FK to auth tables
   caseNumber: text("case_number").notNull(),
   incidentDate: text("incident_date").notNull(),
   investigatingOfficer: text("investigating_officer").notNull(),

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authClient } from "@/lib/auth-client";
+import { signInWithEmail } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -18,37 +18,41 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const { error } = await authClient.signIn.email({ email, password });
-
-    if (error) {
-      setError(error.message ?? "Invalid credentials");
+    try {
+      await signInWithEmail(email, password);
+      router.push("/admin");
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : "";
+      if (
+        raw.includes("invalid-credential") ||
+        raw.includes("wrong-password") ||
+        raw.includes("user-not-found")
+      ) {
+        setError("Invalid email or password.");
+      } else {
+        setError(raw || "Sign-in failed. Please try again.");
+      }
       setLoading(false);
-      return;
     }
-
-    router.push("/admin");
   }
 
   return (
     <div className="w-full max-w-sm">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">ICAF Admin</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to manage documents
-        </p>
-      </div>
-
       <form
         onSubmit={handleSubmit}
         className="bg-card rounded-xl ring-1 ring-foreground/10 p-6 flex flex-col gap-4"
       >
+        <div className="text-center mb-1">
+          <h1 className="text-xl font-bold tracking-tight">Admin Sign In</h1>
+          <p className="mt-1 text-sm text-muted-foreground">ICAF Administration</p>
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
-            placeholder="admin@example.com"
+            placeholder="admin@icaf.com"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -71,7 +75,7 @@ export default function LoginPage() {
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" className="w-full mt-1" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
