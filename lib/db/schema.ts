@@ -58,6 +58,9 @@ export const documents = pgTable("documents", {
   id: text("id").primaryKey(),
   fileName: text("file_name").notNull(),
   chunkCount: integer("chunk_count").notNull().default(0),
+  status: text("status", { enum: ["pending", "processing", "ready", "failed"] })
+    .notNull()
+    .default("pending"),
   uploadedAt: timestamp("uploaded_at").$defaultFn(() => new Date()).notNull(),
 });
 

@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<Response> {
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 400 });
+    return Response.json({ error: z.treeifyError(parsed.error) }, { status: 400 });
   }
 
   const caseId = crypto.randomUUID();
