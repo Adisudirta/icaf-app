@@ -20,13 +20,9 @@ const schema = z.object({
   investigatingOfficer: z.string().min(1, "Officer name is required"),
   incidentLocation: z.string().min(1, "Location is required"),
   incidentType: z.string().min(1, "Select an incident type"),
-  threatLevel: z
-    .string()
-    .min(1, "Threat level is required")
-    .regex(/^\d{2}\/\d{2}\/\d{2}$/, "Must be mm/dd/yy"),
+  threatType: z.string().min(1, "Select a threat type"),
   victimAction: z.string().min(1, "Select a victim action"),
-  suspectCondition: z.string().min(1, "Select suspect condition"),
-  victimCondition: z.string().min(1, "Select victim condition"),
+  outcome: z.string().min(1, "Select an outcome"),
   context: z.string().min(10, "Context must be at least 10 characters"),
 });
 
@@ -35,43 +31,31 @@ export type LegalCaseFormValues = z.infer<typeof schema>;
 // ── Options ───────────────────────────────────────────────────────────────────
 
 const INCIDENT_TYPES = [
-  "Assault",
-  "Robbery",
-  "Burglary",
-  "Fraud",
-  "Homicide",
-  "Kidnapping",
-  "Drug Offense",
-  "Cybercrime",
-  "Vandalism",
-  "Other",
+  "Pencurian",
+  "Begal / Perampokan",
+] as const;
+
+const THREAT_TYPES = [
+  "Tanpa kekerasan",
+  "Dengan kekerasan",
+  "Dengan Kekerasan, Dilakukan 2 orang+",
+  "Menggunakan senjata",
+  "Berkelompok + Senjata",
 ] as const;
 
 const VICTIM_ACTIONS = [
-  "Fled the scene",
-  "Resisted",
-  "Complied",
-  "Called for help",
-  "Fought back",
-  "Unconscious",
-  "Unknown",
+  "Kabur / Lari",
+  "Menyerahkan Barang",
+  "Melawan (Defensif)",
+  "Melawan (Aktif)",
+  "Melawan (Spontan)",
+  "Melawan (Berlebih)",
 ] as const;
 
-const SUSPECT_CONDITIONS = [
-  "Arrested",
-  "At large",
-  "Deceased",
-  "Injured",
-  "Unknown",
-] as const;
-
-const VICTIM_CONDITIONS = [
-  "Unharmed",
-  "Minor injuries",
-  "Serious injuries",
-  "Critical",
-  "Deceased",
-  "Unknown",
+const OUTCOMES = [
+  "Barang Hilang",
+  "Pelaku Luka",
+  "Pelaku Mati",
 ] as const;
 
 // ── Shared class strings ──────────────────────────────────────────────────────
@@ -219,10 +203,9 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
       investigatingOfficer: "",
       incidentLocation: "",
       incidentType: "",
-      threatLevel: "",
+      threatType: "",
       victimAction: "",
-      suspectCondition: "",
-      victimCondition: "",
+      outcome: "",
       context: "",
     },
   });
@@ -315,13 +298,20 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
           </FieldWrapper>
 
           <FieldWrapper
-            label="Select Threat Level"
-            error={errors.threatLevel?.message}
+            label="Select Threat Type"
+            error={errors.threatType?.message}
           >
-            <TextInput
-              placeholder="mm/dd/yy"
-              error={errors.threatLevel}
-              {...register("threatLevel")}
+            <Controller
+              name="threatType"
+              control={control}
+              render={({ field }) => (
+                <SelectInput
+                  placeholder="Select one of the options"
+                  options={THREAT_TYPES}
+                  error={errors.threatType}
+                  {...field}
+                />
+              )}
             />
           </FieldWrapper>
 
@@ -345,37 +335,20 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
 
           <FieldWrapper
             label="Select Outcome"
-            error={
-              errors.suspectCondition?.message ||
-              errors.victimCondition?.message
-            }
+            error={errors.outcome?.message}
           >
-            <div className="grid grid-cols-2 gap-2">
-              <Controller
-                name="suspectCondition"
-                control={control}
-                render={({ field }) => (
-                  <SelectInput
-                    placeholder="Suspect Condition"
-                    options={SUSPECT_CONDITIONS}
-                    error={errors.suspectCondition}
-                    {...field}
-                  />
-                )}
-              />
-              <Controller
-                name="victimCondition"
-                control={control}
-                render={({ field }) => (
-                  <SelectInput
-                    placeholder="Victim Condition"
-                    options={VICTIM_CONDITIONS}
-                    error={errors.victimCondition}
-                    {...field}
-                  />
-                )}
-              />
-            </div>
+            <Controller
+              name="outcome"
+              control={control}
+              render={({ field }) => (
+                <SelectInput
+                  placeholder="Select one of the options"
+                  options={OUTCOMES}
+                  error={errors.outcome}
+                  {...field}
+                />
+              )}
+            />
           </FieldWrapper>
         </div>
 

@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 type StepStatus = "active" | "completed" | "inactive";
 type StepItem = {
@@ -122,10 +123,12 @@ export default function Stepper({
       </div>
 
       {isOnboarding && (
-        <Button className="p-5 rounded-xl">
-          <Plus />
-          <span className="font-bold">Add New Case</span>
-        </Button>
+        <Link href="/create">
+          <Button className="p-5 rounded-xl">
+            <Plus />
+            <span className="font-bold">Add New Case</span>
+          </Button>
+        </Link>
       )}
     </div>
   );

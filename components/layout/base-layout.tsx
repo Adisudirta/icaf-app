@@ -1,6 +1,6 @@
 "use client";
 
-import { EllipsisVertical, LogOut, Plus } from "lucide-react";
+import { EllipsisVertical, LogOut, Plus, Trash2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ import { ButtonGroup } from "../ui/button-group";
 import { Button } from "../ui/button";
 import { firebaseSignOut, signInWithGoogle } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface BaseLayoutProps {
   children: React.ReactNode;
@@ -35,6 +35,30 @@ export default function BaseLayout({
   const router = useRouter();
   const [signingIn, setSigningIn] = useState(false);
   const [signInError, setSignInError] = useState("");
+  const [caseList, setCaseList] = useState(recentCases);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCaseList(recentCases);
+  }, [recentCases]);
+
+  async function handleDelete(caseId: string) {
+    setDeletingId(caseId);
+    const next = caseList.filter((c) => c.id !== caseId);
+    setCaseList(next);
+    try {
+      await fetch(`/api/cases/${caseId}`, { method: "DELETE" });
+      if (next.length === 0) {
+        router.push("/");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setCaseList(recentCases);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleSignIn() {
     setSignInError("");
@@ -121,25 +145,21 @@ export default function BaseLayout({
 
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {recentCases.length === 0 ? (
+                  {caseList.length === 0 ? (
                     <SidebarMenuItem>
                       <p className="px-3 py-2 text-xs text-muted-foreground">
                         No cases yet
                       </p>
                     </SidebarMenuItem>
                   ) : (
-                    recentCases.map((c) => (
-                      <SidebarMenuItem key={c.id}>
-                        <SidebarMenuButton
-                          asChild
-                          className="rounded-xl mb-2 hover:bg-[#DCE4E8] flex justify-between items-center py-2 px-3"
-                        >
-                          <Link href={`/analysis?caseId=${c.id}`}>
-                            <span className="truncate">{c.caseNumber}</span>
-                            <EllipsisVertical className="shrink-0" />
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                    caseList.map((c) => (
+                      <CaseItem
+                        key={c.id}
+                        caseId={c.id}
+                        caseNumber={c.caseNumber}
+                        deleting={deletingId === c.id}
+                        onDelete={handleDelete}
+                      />
                     ))
                   )}
                 </SidebarMenu>
@@ -206,5 +226,72 @@ export default function BaseLayout({
         </div>
       </SidebarProvider>
     </div>
+  );
+}
+
+function CaseItem({
+  caseId,
+  caseNumber,
+  deleting,
+  onDelete,
+}: {
+  caseId: string;
+  caseNumber: string;
+  deleting: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  return (
+    <SidebarMenuItem className="relative">
+      <div className="group rounded-xl mb-2 hover:bg-[#DCE4E8] flex items-center py-2 px-3 gap-1">
+        <Link
+          href={`/analysis?caseId=${caseId}`}
+          className="flex-1 min-w-0 text-sm truncate"
+        >
+          {caseNumber}
+        </Link>
+
+        <button
+          onClick={(e) => { e.preventDefault(); setOpen((v) => !v); }}
+          disabled={deleting}
+          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+        >
+          {deleting ? (
+            <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+          ) : (
+            <EllipsisVertical className="size-4" />
+          )}
+        </button>
+      </div>
+
+      {open && (
+        <div
+          ref={menuRef}
+          className="absolute left-2 right-2 z-50 mt-0.5 rounded-lg border bg-popover shadow-md py-1"
+          style={{ top: "100%" }}
+        >
+          <button
+            onClick={() => { setOpen(false); onDelete(caseId); }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <Trash2 className="size-4" />
+            Hapus Kasus
+          </button>
+        </div>
+      )}
+    </SidebarMenuItem>
   );
 }
