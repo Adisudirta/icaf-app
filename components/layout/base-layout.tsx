@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Input } from "../ui/input";
-import { ButtonGroup } from "../ui/button-group";
 import { Button } from "../ui/button";
 import { firebaseSignOut, signInWithGoogle } from "@/lib/auth-client";
 import { AuthContext } from "@/lib/auth-context";
@@ -44,6 +43,7 @@ export default function BaseLayout({
   const [caseList, setCaseList] = useState(recentCases);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setCaseList(recentCases);
@@ -155,13 +155,11 @@ export default function BaseLayout({
                     </SidebarMenuItem>
 
                     <SidebarMenuItem>
-                      <ButtonGroup>
-                        <Input
-                          id="input-button-group"
-                          placeholder="Search cases"
-                        />
-                        <Button variant="outline">Search</Button>
-                      </ButtonGroup>
+                      <Input
+                        placeholder="Search cases"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
                     </SidebarMenuItem>
                   </SidebarMenu>
                 </SidebarGroupContent>
@@ -174,28 +172,37 @@ export default function BaseLayout({
 
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {caseList.length === 0 ? (
-                      <SidebarMenuItem>
-                        <p className="px-3 py-2 text-xs text-muted-foreground">
-                          No cases yet
-                        </p>
-                      </SidebarMenuItem>
-                    ) : (
-                      caseList.map((c) => (
-                        <CaseItem
-                          key={c.id}
-                          caseId={c.id}
-                          caseName={c.caseName}
-                          href={
-                            c.hasDocument || c.hasAnalysis
-                              ? `/review?caseId=${c.id}`
-                              : `/analysis?caseId=${c.id}`
-                          }
-                          deleting={deletingId === c.id}
-                          onDelete={handleDelete}
-                        />
-                      ))
-                    )}
+                    {(() => {
+                      const filtered = searchQuery.trim()
+                        ? caseList.filter((c) =>
+                            c.caseName.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                        : caseList;
+                      return filtered.length === 0 ? (
+                        <SidebarMenuItem>
+                          <p className="px-3 py-2 text-xs text-muted-foreground">
+                            {searchQuery.trim() ? "No cases found." : "No cases yet"}
+                          </p>
+                        </SidebarMenuItem>
+                      ) : (
+                        <>
+                          {filtered.map((c) => (
+                            <CaseItem
+                              key={c.id}
+                              caseId={c.id}
+                              caseName={c.caseName}
+                              href={
+                                c.hasDocument || c.hasAnalysis
+                                  ? `/review?caseId=${c.id}`
+                                  : `/analysis?caseId=${c.id}`
+                              }
+                              deleting={deletingId === c.id}
+                              onDelete={handleDelete}
+                            />
+                          ))}
+                        </>
+                      );
+                    })()}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
