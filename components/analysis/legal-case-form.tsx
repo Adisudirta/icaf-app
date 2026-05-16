@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronDown } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 // ── Schema & Types ────────────────────────────────────────────────────────────
 
@@ -184,6 +185,7 @@ interface LegalCaseFormProps {
 
 export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   const router = useRouter();
+  const { user, openSignInModal } = useAuth();
   const {
     register,
     handleSubmit,
@@ -205,6 +207,10 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   });
 
   const handleFormSubmit: SubmitHandler<LegalCaseFormValues> = async (data) => {
+    if (!user) {
+      openSignInModal();
+      return;
+    }
     if (onSubmit) {
       await onSubmit(data);
       return;

@@ -1,6 +1,9 @@
+"use client";
+
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button";
-import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 
 type StepStatus = "active" | "completed" | "inactive";
 type StepItem = {
@@ -100,6 +103,17 @@ export default function Stepper({
   currentStep?: number;
   isOnboarding?: boolean;
 }) {
+  const { user, openSignInModal } = useAuth();
+  const router = useRouter();
+
+  function handleAddCase() {
+    if (user) {
+      router.push("/create");
+    } else {
+      openSignInModal();
+    }
+  }
+
   const getStatus = (stepId: number): StepStatus => {
     if (stepId < currentStep) return "completed";
     if (stepId === currentStep) return "active";
@@ -123,12 +137,10 @@ export default function Stepper({
       </div>
 
       {isOnboarding && (
-        <Link href="/create">
-          <Button className="p-5 rounded-xl">
-            <Plus />
-            <span className="font-bold">Add New Case</span>
-          </Button>
-        </Link>
+        <Button className="p-5 rounded-xl" onClick={handleAddCase}>
+          <Plus />
+          <span className="font-bold">Add New Case</span>
+        </Button>
       )}
     </div>
   );
