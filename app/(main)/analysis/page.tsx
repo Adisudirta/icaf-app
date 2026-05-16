@@ -5,6 +5,8 @@ import Stepper from "@/components/layout/stepper";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function AnalysisPage() {
   const router = useRouter();
@@ -24,6 +26,16 @@ export default function AnalysisPage() {
 
     const run = async () => {
       try {
+        const existing = await fetch(`/api/cases/${caseId}`);
+        if (existing.ok) {
+          const data = await existing.json();
+          if (data.analysisText) {
+            setContent(data.analysisText);
+            setIsDone(true);
+            return;
+          }
+        }
+
         const res = await fetch(`/api/cases/${caseId}/analysis`, {
           method: "POST",
         });
@@ -41,13 +53,7 @@ export default function AnalysisPage() {
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          // AI SDK data stream format: lines starting with "0:" contain text
-          for (const line of chunk.split("\n")) {
-            if (line.startsWith('0:"')) {
-              const text = JSON.parse(line.slice(2));
-              setContent((prev) => prev + text);
-            }
-          }
+          setContent((prev) => prev + chunk);
         }
 
         setIsDone(true);
@@ -82,10 +88,42 @@ export default function AnalysisPage() {
           {error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : isLoading && !content ? (
-            <div className="border-card-foreground/10 h-64 rounded-md border bg-[repeating-linear-gradient(45deg,color-mix(in_oklab,var(--card-foreground)10%,transparent),color-mix(in_oklab,var(--card-foreground)10%,transparent)_1px,var(--card)_2px,var(--card)_15px)]" />
+            <div className="py-2">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="relative size-4 shrink-0">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">Menganalisis kasus, harap tunggu…</span>
+              </div>
+              <div className="space-y-6 animate-pulse">
+                <div className="h-4 bg-muted rounded-md w-2/5" />
+                <div className="space-y-2.5">
+                  <div className="h-3 bg-muted rounded w-full" />
+                  <div className="h-3 bg-muted rounded w-[96%]" />
+                  <div className="h-3 bg-muted rounded w-[89%]" />
+                  <div className="h-3 bg-muted rounded w-[93%]" />
+                </div>
+                <div className="h-4 bg-muted rounded-md w-1/3" />
+                <div className="space-y-2.5 pl-4">
+                  <div className="h-3 bg-muted rounded w-[85%]" />
+                  <div className="h-3 bg-muted rounded w-[78%]" />
+                  <div className="h-3 bg-muted rounded w-[81%]" />
+                  <div className="h-3 bg-muted rounded w-[70%]" />
+                </div>
+                <div className="h-4 bg-muted rounded-md w-2/5" />
+                <div className="space-y-2.5">
+                  <div className="h-3 bg-muted rounded w-full" />
+                  <div className="h-3 bg-muted rounded w-[91%]" />
+                  <div className="h-3 bg-muted rounded w-[64%]" />
+                </div>
+              </div>
+            </div>
           ) : (
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed">
-              {content}
+            <div className="prose prose-sm max-w-none text-sm leading-relaxed prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:rounded prose-ol:list-decimal prose-ul:list-disc">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
               {isLoading && (
                 <span className="inline-block w-1.5 h-4 bg-primary ml-0.5 animate-pulse" />
               )}

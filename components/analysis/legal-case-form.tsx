@@ -9,14 +9,8 @@ import { ChevronDown } from "lucide-react";
 // ── Schema & Types ────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  caseNumber: z
-    .string()
-    .min(1, "Case number is required")
-    .regex(/^[A-Za-z0-9\/\-\.]+$/, "Invalid case number format"),
-  incidentDate: z
-    .string()
-    .min(1, "Incident date is required")
-    .regex(/^\d{2}\/\d{2}\/\d{2}$/, "Must be mm/dd/yy"),
+  caseName: z.string().min(1, "Case name is required"),
+  incidentDate: z.string().min(1, "Incident date is required"),
   investigatingOfficer: z.string().min(1, "Officer name is required"),
   incidentLocation: z.string().min(1, "Location is required"),
   incidentType: z.string().min(1, "Select an incident type"),
@@ -198,7 +192,7 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   } = useForm<LegalCaseFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      caseNumber: "",
+      caseName: "",
       incidentDate: "",
       investigatingOfficer: "",
       incidentLocation: "",
@@ -231,11 +225,11 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
         <SectionHeader title="METADATA" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mb-5">
-          <FieldWrapper label="Case Number" error={errors.caseNumber?.message}>
+          <FieldWrapper label="Case Name" error={errors.caseName?.message}>
             <TextInput
-              placeholder="e.g B/123/III/2026/Satreskrim"
-              error={errors.caseNumber}
-              {...register("caseNumber")}
+              placeholder="Enter case name"
+              error={errors.caseName}
+              {...register("caseName")}
             />
           </FieldWrapper>
 
@@ -243,9 +237,9 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
             label="Incident Date"
             error={errors.incidentDate?.message}
           >
-            <TextInput
-              placeholder="mm/dd/yy"
-              error={errors.incidentDate}
+            <input
+              type="date"
+              className={`${inputBase} ${errors.incidentDate ? inputErrorCls : ""}`}
               {...register("incidentDate")}
             />
           </FieldWrapper>

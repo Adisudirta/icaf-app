@@ -4,15 +4,14 @@ import { cases } from "@/lib/db/schema";
 import { z } from "zod";
 
 const schema = z.object({
-  caseNumber: z.string().min(1),
+  caseName: z.string().min(1),
   incidentDate: z.string().min(1),
   investigatingOfficer: z.string().min(1),
   incidentLocation: z.string().min(1),
   incidentType: z.string().min(1),
-  threatLevel: z.string().min(1),
+  threatType: z.string().min(1),
   victimAction: z.string().min(1),
-  suspectCondition: z.string().min(1),
-  victimCondition: z.string().min(1),
+  outcome: z.string().min(1),
   context: z.string().min(1),
 });
 

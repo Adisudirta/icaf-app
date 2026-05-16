@@ -24,7 +24,7 @@ import { useEffect, useRef, useState } from "react";
 interface BaseLayoutProps {
   children: React.ReactNode;
   user?: { name: string; email: string; image?: string | null } | null;
-  recentCases?: { id: string; caseNumber: string }[];
+  recentCases?: { id: string; caseName: string; hasAnalysis: boolean; hasDocument: boolean }[];
 }
 
 export default function BaseLayout({
@@ -87,7 +87,7 @@ export default function BaseLayout({
   return (
     <div className="flex min-h-dvh w-full">
       <SidebarProvider>
-        <Sidebar>
+        <Sidebar className="print:hidden">
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupContent>
@@ -156,7 +156,8 @@ export default function BaseLayout({
                       <CaseItem
                         key={c.id}
                         caseId={c.id}
-                        caseNumber={c.caseNumber}
+                        caseName={c.caseName}
+                        href={c.hasDocument || c.hasAnalysis ? `/review?caseId=${c.id}` : `/analysis?caseId=${c.id}`}
                         deleting={deletingId === c.id}
                         onDelete={handleDelete}
                       />
@@ -169,7 +170,7 @@ export default function BaseLayout({
         </Sidebar>
 
         <div className="flex flex-1 flex-col">
-          <header className="bg-card sticky top-0 z-50 flex h-13.75 items-center justify-between gap-6 border-b px-4 py-2 sm:px-6">
+          <header className="bg-card sticky top-0 z-50 flex h-13.75 items-center justify-between gap-6 border-b px-4 py-2 sm:px-6 print:hidden">
             <SidebarTrigger className="[&_svg]:size-5!" />
 
             <div className="flex items-center gap-3">
@@ -218,7 +219,7 @@ export default function BaseLayout({
             {children}
           </main>
 
-          <footer className="bg-card h-10 border-t px-4 sm:px-6 flex items-center justify-center">
+          <footer className="bg-card h-10 border-t px-4 sm:px-6 flex items-center justify-center print:hidden">
             <span className="text-sm">
               Copyright &copy; 2024. All rights reserved.
             </span>
@@ -231,12 +232,14 @@ export default function BaseLayout({
 
 function CaseItem({
   caseId,
-  caseNumber,
+  caseName,
+  href,
   deleting,
   onDelete,
 }: {
   caseId: string;
-  caseNumber: string;
+  caseName: string;
+  href: string;
   deleting: boolean;
   onDelete: (id: string) => void;
 }) {
@@ -258,10 +261,10 @@ function CaseItem({
     <SidebarMenuItem className="relative">
       <div className="group rounded-xl mb-2 hover:bg-[#DCE4E8] flex items-center py-2 px-3 gap-1">
         <Link
-          href={`/analysis?caseId=${caseId}`}
+          href={href}
           className="flex-1 min-w-0 text-sm truncate"
         >
-          {caseNumber}
+          {caseName}
         </Link>
 
         <button

@@ -78,15 +78,14 @@ export const documentChunks = pgTable("document_chunks", {
 export const cases = pgTable("cases", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(), // Firebase UID — no FK to auth tables
-  caseNumber: text("case_number").notNull(),
+  caseName: text("case_name").notNull(),
   incidentDate: text("incident_date").notNull(),
   investigatingOfficer: text("investigating_officer").notNull(),
   incidentLocation: text("incident_location").notNull(),
   incidentType: text("incident_type").notNull(),
-  threatLevel: text("threat_level").notNull(),
+  threatType: text("threat_type").notNull(),
   victimAction: text("victim_action").notNull(),
-  suspectCondition: text("suspect_condition").notNull(),
-  victimCondition: text("victim_condition").notNull(),
+  outcome: text("outcome").notNull(),
   context: text("context").notNull(),
   analysisText: text("analysis_text"),
   documentText: text("document_text"),

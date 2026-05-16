@@ -2,7 +2,7 @@ import BaseLayout from "@/components/layout/base-layout";
 import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNotNull, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export default async function MainLayout({
@@ -14,7 +14,12 @@ export default async function MainLayout({
 
   const recentCases = session
     ? await db
-        .select({ id: cases.id, caseNumber: cases.caseNumber })
+        .select({
+          id: cases.id,
+          caseName: cases.caseName,
+          hasAnalysis: sql<boolean>`${cases.analysisText} is not null`,
+          hasDocument: sql<boolean>`${cases.documentText} is not null`,
+        })
         .from(cases)
         .where(eq(cases.userId, session.uid))
         .orderBy(desc(cases.createdAt))

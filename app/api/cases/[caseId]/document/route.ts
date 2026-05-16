@@ -50,5 +50,5 @@ export async function POST(
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }

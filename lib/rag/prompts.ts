@@ -1,13 +1,12 @@
 export type CaseData = {
-  caseNumber: string;
+  caseName: string;
   incidentDate: string;
   investigatingOfficer: string;
   incidentLocation: string;
   incidentType: string;
-  threatLevel: string;
+  threatType: string;
   victimAction: string;
-  suspectCondition: string;
-  victimCondition: string;
+  outcome: string;
   context: string;
 };
 
@@ -27,15 +26,14 @@ export function buildLawContextPrefix(chunks: string[]): string {
 export function buildAnalysisPrompt(caseData: CaseData): string {
   return `Analyze this criminal case and identify applicable Indonesian law articles:
 
-Case Number: ${caseData.caseNumber}
+Case Name: ${caseData.caseName}
 Incident Date: ${caseData.incidentDate}
 Investigating Officer: ${caseData.investigatingOfficer}
 Location: ${caseData.incidentLocation}
 Incident Type: ${caseData.incidentType}
-Threat Level: ${caseData.threatLevel}
+Threat Type: ${caseData.threatType}
 Victim Action: ${caseData.victimAction}
-Suspect Condition: ${caseData.suspectCondition}
-Victim Condition: ${caseData.victimCondition}
+Outcome: ${caseData.outcome}
 Case Context: ${caseData.context}
 
 Provide:
@@ -51,15 +49,14 @@ export function buildDocumentPrompt(
   return `Generate a formal BAP (Berita Acara Pemeriksaan) document in Indonesian based on:
 
 CASE DATA:
-- Nomor Perkara: ${caseData.caseNumber}
+- Nama Perkara: ${caseData.caseName}
 - Tanggal Kejadian: ${caseData.incidentDate}
 - Penyidik: ${caseData.investigatingOfficer}
 - Lokasi: ${caseData.incidentLocation}
 - Jenis Kejadian: ${caseData.incidentType}
-- Tingkat Ancaman: ${caseData.threatLevel}
+- Jenis Ancaman: ${caseData.threatType}
 - Tindakan Korban: ${caseData.victimAction}
-- Kondisi Tersangka: ${caseData.suspectCondition}
-- Kondisi Korban: ${caseData.victimCondition}
+- Hasil: ${caseData.outcome}
 - Uraian Singkat: ${caseData.context}
 
 HASIL ANALISIS HUKUM:
