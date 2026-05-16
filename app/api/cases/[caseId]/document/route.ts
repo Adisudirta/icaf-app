@@ -1,11 +1,11 @@
 import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { cases } from "@/lib/db/schema";
+import { cases, promptTemplates } from "@/lib/db/schema";
 import { openai, AI_MODEL } from "@/lib/ai";
 import { retrieveRelevantChunks } from "@/lib/rag/retrieve";
 import { buildLawContextPrefix, buildDocumentPrompt } from "@/lib/rag/prompts";
 import { streamText } from "ai";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export async function POST(
   request: Request,
@@ -31,12 +31,18 @@ export async function POST(
     );
   }
 
+  const templateRows = await db
+    .select()
+    .from(promptTemplates)
+    .where(inArray(promptTemplates.key, ["law_context_prefix", "document_prompt"]));
+  const tpl = Object.fromEntries(templateRows.map((r) => [r.key, r.body]));
+
   // Same query as analysis → same chunks → same system prefix → CAG cache hit
   const query = `${caseRow.incidentType} ${caseRow.context} ${caseRow.victimAction}`;
   const chunks = await retrieveRelevantChunks(query, 5);
 
-  const system = buildLawContextPrefix(chunks.map((c) => c.content));
-  const prompt = buildDocumentPrompt(caseRow, caseRow.analysisText);
+  const system = buildLawContextPrefix(chunks.map((c) => c.content), tpl["law_context_prefix"]);
+  const prompt = buildDocumentPrompt(caseRow, caseRow.analysisText, tpl["document_prompt"]);
 
   const result = streamText({
     model: openai(AI_MODEL),

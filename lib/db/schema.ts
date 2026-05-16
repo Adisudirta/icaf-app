@@ -1,5 +1,13 @@
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
+// ── Prompt templates ──────────────────────────────────────────────────────────
+
+export const promptTemplates = pgTable("prompt_templates", {
+  key: text("key").primaryKey(),
+  body: text("body").notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+});
+
 // ── RAG: documents ─────────────────────────────────────────────────────────────
 
 export const documents = pgTable("documents", {

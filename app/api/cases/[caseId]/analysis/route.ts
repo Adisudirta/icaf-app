@@ -1,11 +1,11 @@
 import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { cases } from "@/lib/db/schema";
+import { cases, promptTemplates } from "@/lib/db/schema";
 import { openai, AI_MODEL } from "@/lib/ai";
 import { retrieveRelevantChunks } from "@/lib/rag/retrieve";
 import { buildLawContextPrefix, buildAnalysisPrompt } from "@/lib/rag/prompts";
 import { streamText } from "ai";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export async function POST(
   request: Request,
@@ -24,11 +24,17 @@ export async function POST(
 
   if (!caseRow) return new Response("Not found", { status: 404 });
 
+  const templateRows = await db
+    .select()
+    .from(promptTemplates)
+    .where(inArray(promptTemplates.key, ["law_context_prefix", "analysis_prompt"]));
+  const tpl = Object.fromEntries(templateRows.map((r) => [r.key, r.body]));
+
   const query = `${caseRow.incidentType} ${caseRow.context} ${caseRow.victimAction}`;
   const chunks = await retrieveRelevantChunks(query, 5);
 
-  const system = buildLawContextPrefix(chunks.map((c) => c.content));
-  const prompt = buildAnalysisPrompt(caseRow);
+  const system = buildLawContextPrefix(chunks.map((c) => c.content), tpl["law_context_prefix"]);
+  const prompt = buildAnalysisPrompt(caseRow, tpl["analysis_prompt"]);
 
   const result = streamText({
     model: openai(AI_MODEL),
