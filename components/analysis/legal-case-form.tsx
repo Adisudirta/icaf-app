@@ -2,6 +2,7 @@
 
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronDown } from "lucide-react";
@@ -185,7 +186,11 @@ interface LegalCaseFormProps {
 
 export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   const router = useRouter();
-  const { user, openSignInModal } = useAuth();
+  const { user, openSignInModal, weeklyLimitReached } = useAuth();
+
+  useEffect(() => {
+    if (weeklyLimitReached) router.replace("/");
+  }, [weeklyLimitReached, router]);
   const {
     register,
     handleSubmit,
@@ -211,6 +216,10 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
       openSignInModal();
       return;
     }
+    if (weeklyLimitReached) {
+      router.replace("/");
+      return;
+    }
     if (onSubmit) {
       await onSubmit(data);
       return;
@@ -220,8 +229,13 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (res.status === 429) {
+      router.replace("/");
+      return;
+    }
     const { caseId } = await res.json();
     router.push(`/analysis?caseId=${caseId}`);
+    router.refresh();
   };
 
   return (

@@ -19,6 +19,7 @@ import {
   PROMPT_VARS,
   type PromptKey,
 } from "@/lib/rag/prompts";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -68,7 +69,13 @@ const POLLING_INTERVAL = 3000;
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-type Tab = "documents" | "prompts";
+type Tab = "documents" | "prompts" | "settings";
+
+const TAB_LABELS: Record<Tab, string> = {
+  documents: "Dokumen Hukum",
+  prompts: "Template Prompt",
+  settings: "Pengaturan",
+};
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("documents");
@@ -77,7 +84,7 @@ export default function AdminPage() {
     <main className="max-w-3xl mx-auto px-6 py-10 flex flex-col gap-6">
       {/* Tab bar */}
       <div className="flex gap-1 border-b">
-        {(["documents", "prompts"] as Tab[]).map((tab) => (
+        {(["documents", "prompts", "settings"] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -88,12 +95,14 @@ export default function AdminPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground",
             ].join(" ")}
           >
-            {tab === "documents" ? "Dokumen Hukum" : "Template Prompt"}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </div>
 
-      {activeTab === "documents" ? <DocumentsTab /> : <PromptsTab />}
+      {activeTab === "documents" && <DocumentsTab />}
+      {activeTab === "prompts" && <PromptsTab />}
+      {activeTab === "settings" && <SettingsTab />}
     </main>
   );
 }
@@ -419,6 +428,222 @@ function PromptEditor({
       {saveState === "error" && (
         <p className="text-xs text-destructive">Gagal menyimpan. Coba lagi.</p>
       )}
+    </div>
+  );
+}
+
+// ── Settings tab ─────────────────────────────────────────────────────────────
+
+type UserLimitRow = {
+  userId: string;
+  email: string;
+  weeklyAnalysisLimit: number;
+};
+
+function SettingsTab() {
+  // Global default
+  const [globalLimit, setGlobalLimit] = useState(DEFAULT_SETTINGS.weekly_analysis_limit);
+  const [globalSaveState, setGlobalSaveState] = useState<SaveState>("idle");
+  const [loadingGlobal, setLoadingGlobal] = useState(true);
+
+  // Per-user overrides
+  const [userRows, setUserRows] = useState<UserLimitRow[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [newEmail, setNewEmail] = useState("");
+  const [newLimit, setNewLimit] = useState("5");
+  const [addState, setAddState] = useState<"idle" | "saving" | "error">("idle");
+  const [addError, setAddError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        setGlobalLimit(data.weekly_analysis_limit ?? DEFAULT_SETTINGS.weekly_analysis_limit);
+        setLoadingGlobal(false);
+      });
+
+    fetchUserLimits();
+  }, []);
+
+  function fetchUserLimits() {
+    setLoadingUsers(true);
+    fetch("/api/admin/user-limits")
+      .then((r) => r.json())
+      .then((data) => {
+        setUserRows(data);
+        setLoadingUsers(false);
+      });
+  }
+
+  async function handleSaveGlobal() {
+    setGlobalSaveState("saving");
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "weekly_analysis_limit", value: globalLimit }),
+      });
+      if (!res.ok) throw new Error();
+      setGlobalSaveState("saved");
+      setTimeout(() => setGlobalSaveState("idle"), 2000);
+    } catch {
+      setGlobalSaveState("error");
+    }
+  }
+
+  async function handleAddOrUpdate() {
+    setAddState("saving");
+    setAddError("");
+    try {
+      const res = await fetch("/api/admin/user-limits", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail.trim(), limit: newLimit }),
+      });
+      if (res.status === 404) throw new Error("Pengguna tidak ditemukan di Firebase.");
+      if (!res.ok) throw new Error("Gagal menyimpan.");
+      setNewEmail("");
+      setNewLimit("5");
+      setAddState("idle");
+      fetchUserLimits();
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : "Gagal menyimpan.");
+      setAddState("error");
+    }
+  }
+
+  async function handleReset(userId: string) {
+    await fetch("/api/admin/user-limits", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    fetchUserLimits();
+  }
+
+  if (loadingGlobal) {
+    return (
+      <div className="h-40 flex items-center justify-center text-muted-foreground text-sm animate-pulse">
+        Memuat…
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="text-xl font-semibold">Pengaturan</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Konfigurasi batasan analisis hukum per pengguna.
+        </p>
+      </div>
+
+      {/* Global default */}
+      <div className="rounded-xl border bg-card p-5 flex flex-col gap-4">
+        <div>
+          <h2 className="text-sm font-semibold">Batas Default (Semua Pengguna)</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Berlaku untuk pengguna yang tidak memiliki batas kustom.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            min={1}
+            max={999}
+            value={globalLimit}
+            onChange={(e) => setGlobalLimit(e.target.value)}
+            className="w-24 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          <span className="text-sm text-muted-foreground">analisis / minggu</span>
+          <Button
+            size="sm"
+            onClick={handleSaveGlobal}
+            disabled={globalSaveState === "saving"}
+            className="gap-1.5 ml-auto"
+          >
+            {globalSaveState === "saving" ? (
+              <RefreshCw className="size-3 animate-spin" />
+            ) : (
+              <Save className="size-3" />
+            )}
+            {globalSaveState === "saving"
+              ? "Menyimpan…"
+              : globalSaveState === "saved"
+              ? "Tersimpan"
+              : "Simpan"}
+          </Button>
+        </div>
+        {globalSaveState === "error" && (
+          <p className="text-xs text-destructive">Gagal menyimpan. Coba lagi.</p>
+        )}
+      </div>
+
+      {/* Per-user overrides */}
+      <div className="rounded-xl border bg-card p-5 flex flex-col gap-5">
+        <div>
+          <h2 className="text-sm font-semibold">Batas Per Pengguna</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Override batas untuk pengguna tertentu.
+          </p>
+        </div>
+
+        {/* Add / edit form */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Email pengguna"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setAddState("idle"); }}
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <input
+              type="number"
+              min={1}
+              max={999}
+              value={newLimit}
+              onChange={(e) => setNewLimit(e.target.value)}
+              className="w-20 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <Button
+              size="sm"
+              onClick={handleAddOrUpdate}
+              disabled={!newEmail || addState === "saving"}
+              className="gap-1.5 shrink-0"
+            >
+              {addState === "saving" ? <RefreshCw className="size-3 animate-spin" /> : <Save className="size-3" />}
+              Simpan
+            </Button>
+          </div>
+          {addState === "error" && (
+            <p className="text-xs text-destructive">{addError}</p>
+          )}
+        </div>
+
+        {/* User list */}
+        {loadingUsers ? (
+          <p className="text-xs text-muted-foreground animate-pulse">Memuat…</p>
+        ) : userRows.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Belum ada batas kustom.</p>
+        ) : (
+          <div className="flex flex-col divide-y">
+            {userRows.map((row) => (
+              <div key={row.userId} className="flex items-center gap-3 py-2.5">
+                <span className="flex-1 text-sm truncate">{row.email}</span>
+                <span className="text-sm font-medium tabular-nums">{row.weeklyAnalysisLimit}×</span>
+                <span className="text-xs text-muted-foreground">/ minggu</span>
+                <button
+                  onClick={() => handleReset(row.userId)}
+                  className="text-xs text-destructive hover:underline ml-2"
+                >
+                  Reset
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

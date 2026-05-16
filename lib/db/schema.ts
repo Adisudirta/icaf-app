@@ -1,5 +1,13 @@
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
+// ── App settings ──────────────────────────────────────────────────────────────
+
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+});
+
 // ── Prompt templates ──────────────────────────────────────────────────────────
 
 export const promptTemplates = pgTable("prompt_templates", {
@@ -29,6 +37,15 @@ export const documentChunks = pgTable("document_chunks", {
   content: text("content").notNull(),
 });
 
+// ── Per-user limits ───────────────────────────────────────────────────────────
+
+export const userLimits = pgTable("user_limits", {
+  userId: text("user_id").primaryKey(),
+  email: text("email").notNull(),
+  weeklyAnalysisLimit: integer("weekly_analysis_limit").notNull(),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+});
+
 // ── Cases ──────────────────────────────────────────────────────────────────────
 
 export const cases = pgTable("cases", {
@@ -44,6 +61,7 @@ export const cases = pgTable("cases", {
   outcome: text("outcome").notNull(),
   context: text("context").notNull(),
   analysisText: text("analysis_text"),
+  analysisRunAt: timestamp("analysis_run_at"),
   documentText: text("document_text"),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),

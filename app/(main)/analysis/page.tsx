@@ -7,11 +7,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AnalysisPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
+  const { weeklyLimitReached } = useAuth();
+
+  useEffect(() => {
+    if (weeklyLimitReached) router.replace("/");
+  }, [weeklyLimitReached, router]);
 
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +47,15 @@ export default function AnalysisPage() {
         });
 
         if (!res.ok) {
-          setError("Failed to start analysis. Please try again.");
+          if (res.status === 429) {
+            const body = await res.json().catch(() => ({}));
+            const limit = body.limit ?? 5;
+            setError(
+              `Batas analisis mingguan tercapai (${limit} analisis/minggu). Silakan coba lagi minggu depan.`
+            );
+          } else {
+            setError("Gagal memulai analisis. Silakan coba lagi.");
+          }
           return;
         }
 

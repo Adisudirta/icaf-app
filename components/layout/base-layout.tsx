@@ -30,19 +30,25 @@ interface BaseLayoutProps {
     hasAnalysis: boolean;
     hasDocument: boolean;
   }[];
+  weeklyUsed?: number;
+  weeklyLimit?: number;
 }
 
 export default function BaseLayout({
   children,
   user,
   recentCases = [],
+  weeklyUsed = 0,
+  weeklyLimit = 5,
 }: BaseLayoutProps) {
+  const weeklyLimitReached = weeklyUsed >= weeklyLimit;
   const router = useRouter();
   const [signingIn, setSigningIn] = useState(false);
   const [signInError, setSignInError] = useState("");
   const [caseList, setCaseList] = useState(recentCases);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -97,11 +103,13 @@ export default function BaseLayout({
   }
 
   function handleCreateClick() {
-    if (user) {
-      router.push("/create");
-    } else {
+    if (!user) {
       setSignInError("");
       setShowSignInModal(true);
+    } else if (weeklyLimitReached) {
+      setShowLimitModal(true);
+    } else {
+      router.push("/create");
     }
   }
 
@@ -114,6 +122,8 @@ export default function BaseLayout({
           setSignInError("");
           setShowSignInModal(true);
         },
+        weeklyLimitReached,
+        openLimitModal: () => setShowLimitModal(true),
       }}
     >
       <div className="flex min-h-dvh w-full">
@@ -175,13 +185,17 @@ export default function BaseLayout({
                     {(() => {
                       const filtered = searchQuery.trim()
                         ? caseList.filter((c) =>
-                            c.caseName.toLowerCase().includes(searchQuery.toLowerCase())
+                            c.caseName
+                              .toLowerCase()
+                              .includes(searchQuery.toLowerCase()),
                           )
                         : caseList;
                       return filtered.length === 0 ? (
                         <SidebarMenuItem>
                           <p className="px-3 py-2 text-xs text-muted-foreground">
-                            {searchQuery.trim() ? "No cases found." : "No cases yet"}
+                            {searchQuery.trim()
+                              ? "No cases found."
+                              : "No cases yet"}
                           </p>
                         </SidebarMenuItem>
                       ) : (
@@ -361,6 +375,92 @@ export default function BaseLayout({
               )}
               {signingIn ? "Signing in…" : "Sign in with Google"}
             </Button>
+          </div>
+        </div>
+      )}
+      {/* ── Limit reached modal ─────────────────────────────────────── */}
+      {showLimitModal && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => {
+            setShowLimitModal(false);
+            router.push("/");
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setShowLimitModal(false);
+                router.push("/");
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="flex justify-center items-center bg-amber-100 w-10 h-10 rounded-xl">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-5 text-amber-600"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+
+            <div className="text-center">
+              <h2 className="text-lg font-bold text-gray-900">
+                Batas Mingguan Tercapai
+              </h2>
+              <p className="mt-1.5 text-sm text-gray-500">
+                Limit anda adalah{" "}
+                <span className="font-semibold text-gray-700">
+                  {weeklyLimit} analisis hukum
+                </span>{" "}
+                per minggu.
+              </p>
+            </div>
+
+            <div className="w-full bg-amber-50 rounded-xl px-4 py-3 text-center">
+              <p className="text-xs text-amber-700 font-medium">
+                Dapat membuat analisis baru mulai
+              </p>
+              <p className="text-sm font-semibold text-amber-900 mt-0.5">
+                {(() => {
+                  const now = new Date();
+                  const day = now.getUTCDay();
+                  const next = new Date(now);
+                  next.setUTCDate(now.getUTCDate() + (day === 0 ? 1 : 8 - day));
+                  next.setUTCHours(0, 0, 0, 0);
+                  return new Intl.DateTimeFormat("id-ID", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  }).format(next);
+                })()}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                router.push("/");
+                setShowLimitModal(false);
+              }}
+              className="w-full py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Mengerti
+            </button>
           </div>
         </div>
       )}
