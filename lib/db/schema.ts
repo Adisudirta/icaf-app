@@ -65,4 +65,5 @@ export const cases = pgTable("cases", {
   documentText: text("document_text"),
   createdAt: timestamp("created_at").$defaultFn(() => new Date()).notNull(),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()).notNull(),
+  deletedAt: timestamp("deleted_at"),
 });

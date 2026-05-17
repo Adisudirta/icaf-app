@@ -13,8 +13,7 @@ type StepItem = {
 
 const steps: StepItem[] = [
   { id: 1, label: "Create Case" },
-  { id: 2, label: "Legal Analysis" },
-  { id: 3, label: "Review Docs" },
+  { id: 2, label: "Review Docs" },
 ];
 
 function StepItem({ step, status }: { step: StepItem; status: StepStatus }) {

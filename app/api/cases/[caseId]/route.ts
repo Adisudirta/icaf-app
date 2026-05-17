@@ -1,7 +1,7 @@
 import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { cases } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET(
@@ -16,7 +16,7 @@ export async function GET(
   const [row] = await db
     .select({ analysisText: cases.analysisText, documentText: cases.documentText })
     .from(cases)
-    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid)))
+    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid), isNull(cases.deletedAt)))
     .limit(1);
 
   if (!row) return new Response("Not found", { status: 404 });
@@ -33,12 +33,13 @@ export async function DELETE(
 
   const { caseId } = await params;
 
-  const deleted = await db
-    .delete(cases)
-    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid)))
+  const updated = await db
+    .update(cases)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid), isNull(cases.deletedAt)))
     .returning({ id: cases.id });
 
-  if (!deleted.length) {
+  if (!updated.length) {
     return new Response("Not found", { status: 404 });
   }
 

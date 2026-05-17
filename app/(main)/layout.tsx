@@ -2,7 +2,7 @@ import BaseLayout from "@/components/layout/base-layout";
 import { getServerSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { cases, appSettings, userLimits } from "@/lib/db/schema";
-import { eq, desc, sql, count, gte, and } from "drizzle-orm";
+import { eq, desc, sql, count, gte, and, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { DEFAULT_SETTINGS, getWeekStart } from "@/lib/settings";
 
@@ -23,7 +23,7 @@ export default async function MainLayout({
             hasDocument: sql<boolean>`${cases.documentText} is not null`,
           })
           .from(cases)
-          .where(eq(cases.userId, session.uid))
+          .where(and(eq(cases.userId, session.uid), isNull(cases.deletedAt)))
           .orderBy(desc(cases.createdAt))
           .limit(10)
       : Promise.resolve([]),

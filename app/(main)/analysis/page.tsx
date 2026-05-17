@@ -7,18 +7,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useAuth } from "@/lib/auth-context";
 
 export default function AnalysisPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const caseId = searchParams.get("caseId");
-  const { weeklyLimitReached } = useAuth();
-
-  useEffect(() => {
-    if (weeklyLimitReached) router.replace("/");
-  }, [weeklyLimitReached, router]);
-
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDone, setIsDone] = useState(false);

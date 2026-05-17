@@ -5,7 +5,7 @@ import { openai, AI_MODEL } from "@/lib/ai";
 import { retrieveRelevantChunks } from "@/lib/rag/retrieve";
 import { buildLawContextPrefix, buildAnalysisPrompt } from "@/lib/rag/prompts";
 import { streamText } from "ai";
-import { eq, and, inArray, gte, count } from "drizzle-orm";
+import { eq, and, inArray, gte, count, isNull } from "drizzle-orm";
 import { DEFAULT_SETTINGS, getWeekStart } from "@/lib/settings";
 
 export async function POST(
@@ -20,7 +20,7 @@ export async function POST(
   const [caseRow] = await db
     .select()
     .from(cases)
-    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid)))
+    .where(and(eq(cases.id, caseId), eq(cases.userId, session.uid), isNull(cases.deletedAt)))
     .limit(1);
 
   if (!caseRow) return new Response("Not found", { status: 404 });

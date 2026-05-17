@@ -41,8 +41,16 @@ export default function ReviewPage() {
         });
 
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error ?? "Failed to generate document.");
+          if (res.status === 429) {
+            const body = await res.json().catch(() => ({}));
+            const limit = body.limit ?? 5;
+            setError(
+              `Batas analisis mingguan tercapai (${limit} analisis/minggu). Silakan coba lagi minggu depan.`
+            );
+          } else {
+            const data = await res.json().catch(() => ({}));
+            setError(data.error ?? "Failed to generate document.");
+          }
           return;
         }
 
@@ -83,7 +91,7 @@ export default function ReviewPage() {
       </h2>
 
       <div className="print:hidden">
-        <Stepper currentStep={3} />
+        <Stepper currentStep={2} />
       </div>
 
       <Card className="mt-6 print:shadow-none print:border-0 print:ring-0">

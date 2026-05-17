@@ -2,7 +2,6 @@
 
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ChevronDown } from "lucide-react";
@@ -186,11 +185,8 @@ interface LegalCaseFormProps {
 
 export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
   const router = useRouter();
-  const { user, openSignInModal, weeklyLimitReached } = useAuth();
+  const { user, openSignInModal } = useAuth();
 
-  useEffect(() => {
-    if (weeklyLimitReached) router.replace("/");
-  }, [weeklyLimitReached, router]);
   const {
     register,
     handleSubmit,
@@ -216,10 +212,6 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
       openSignInModal();
       return;
     }
-    if (weeklyLimitReached) {
-      router.replace("/");
-      return;
-    }
     if (onSubmit) {
       await onSubmit(data);
       return;
@@ -234,7 +226,7 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
       return;
     }
     const { caseId } = await res.json();
-    router.push(`/analysis?caseId=${caseId}`);
+    router.push(`/review?caseId=${caseId}`);
     router.refresh();
   };
 
@@ -404,7 +396,7 @@ export default function LegalCaseForm({ onSubmit }: LegalCaseFormProps) {
             "disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0",
           ].join(" ")}
         >
-          {isSubmitting ? "Generating…" : "Generate Legal Analysis"}
+          {isSubmitting ? "Generating…" : "Generate Document"}
         </button>
       </form>
     </div>

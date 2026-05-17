@@ -18,7 +18,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { firebaseSignOut, signInWithGoogle } from "@/lib/auth-client";
 import { AuthContext } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 interface BaseLayoutProps {
@@ -106,8 +106,6 @@ export default function BaseLayout({
     if (!user) {
       setSignInError("");
       setShowSignInModal(true);
-    } else if (weeklyLimitReached) {
-      setShowLimitModal(true);
     } else {
       router.push("/create");
     }
@@ -205,11 +203,7 @@ export default function BaseLayout({
                               key={c.id}
                               caseId={c.id}
                               caseName={c.caseName}
-                              href={
-                                c.hasDocument || c.hasAnalysis
-                                  ? `/review?caseId=${c.id}`
-                                  : `/analysis?caseId=${c.id}`
-                              }
+                              href={`/review?caseId=${c.id}`}
                               deleting={deletingId === c.id}
                               onDelete={handleDelete}
                             />
@@ -483,6 +477,8 @@ function CaseItem({
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const isActive = searchParams.get("caseId") === caseId;
 
   useEffect(() => {
     if (!open) return;
@@ -497,7 +493,7 @@ function CaseItem({
 
   return (
     <SidebarMenuItem className="relative">
-      <div className="group rounded-xl mb-2 hover:bg-[#DCE4E8] flex items-center py-2 px-3 gap-1">
+      <div className={`group rounded-xl mb-2 flex items-center py-2 px-3 gap-1 ${isActive ? "bg-[#DCE4E8]" : "hover:bg-[#DCE4E8]"}`}>
         <Link href={href} className="flex-1 min-w-0 text-sm truncate">
           {caseName}
         </Link>
