@@ -106,6 +106,8 @@ export default function BaseLayout({
     if (!user) {
       setSignInError("");
       setShowSignInModal(true);
+    } else if (weeklyLimitReached) {
+      setShowLimitModal(true);
     } else {
       router.push("/create");
     }

@@ -102,14 +102,16 @@ export default function Stepper({
   currentStep?: number;
   isOnboarding?: boolean;
 }) {
-  const { user, openSignInModal } = useAuth();
+  const { user, openSignInModal, weeklyLimitReached, openLimitModal } = useAuth();
   const router = useRouter();
 
   function handleAddCase() {
-    if (user) {
-      router.push("/create");
-    } else {
+    if (!user) {
       openSignInModal();
+    } else if (weeklyLimitReached) {
+      openLimitModal();
+    } else {
+      router.push("/create");
     }
   }
 
