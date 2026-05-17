@@ -1,4 +1,4 @@
-import { getServerSession } from "@/lib/session";
+import { getAdminSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { appSettings } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ import {
 } from "@/lib/settings";
 
 export async function GET(request: Request): Promise<Response> {
-  const session = await getServerSession(request.headers as Headers);
+  const session = await getAdminSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const rows = await db.select().from(appSettings);
@@ -23,7 +23,7 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 export async function PUT(request: Request): Promise<Response> {
-  const session = await getServerSession(request.headers as Headers);
+  const session = await getAdminSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { key, value } = await request.json();

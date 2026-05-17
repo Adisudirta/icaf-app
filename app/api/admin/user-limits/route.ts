@@ -1,4 +1,4 @@
-import { getServerSession } from "@/lib/session";
+import { getAdminSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { userLimits } from "@/lib/db/schema";
 import { adminAuth } from "@/lib/firebase-admin";
@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request): Promise<Response> {
-  const session = await getServerSession(request.headers as Headers);
+  const session = await getAdminSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const rows = await db.select().from(userLimits).orderBy(userLimits.updatedAt);
@@ -14,7 +14,7 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 export async function PUT(request: Request): Promise<Response> {
-  const session = await getServerSession(request.headers as Headers);
+  const session = await getAdminSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { email, limit } = await request.json();
@@ -55,7 +55,7 @@ export async function PUT(request: Request): Promise<Response> {
 }
 
 export async function DELETE(request: Request): Promise<Response> {
-  const session = await getServerSession(request.headers as Headers);
+  const session = await getAdminSession(request.headers as Headers);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { userId } = await request.json();
