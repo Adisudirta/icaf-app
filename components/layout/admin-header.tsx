@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { firebaseSignOut } from "@/lib/auth-client";
+import { adminFirebaseSignOut } from "@/lib/auth-client";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -13,8 +13,8 @@ export default function AdminHeader({ email }: AdminHeaderProps) {
   const router = useRouter();
 
   async function handleSignOut() {
-    await firebaseSignOut();
-    router.push("/login");
+    await adminFirebaseSignOut();
+    router.push("/admin/login");
   }
 
   return (

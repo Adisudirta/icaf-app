@@ -6,11 +6,12 @@ export interface ServerSession {
   name: string | undefined;
 }
 
-export async function getServerSession(
-  headers: Headers
+async function getSession(
+  headers: Headers,
+  cookieName: string
 ): Promise<ServerSession | null> {
   const cookie = headers.get("cookie") ?? "";
-  const sessionCookie = parseCookie(cookie, "__session");
+  const sessionCookie = parseCookie(cookie, cookieName);
   if (!sessionCookie) return null;
 
   try {
@@ -19,6 +20,14 @@ export async function getServerSession(
   } catch {
     return null;
   }
+}
+
+export function getServerSession(headers: Headers) {
+  return getSession(headers, "__session");
+}
+
+export function getAdminSession(headers: Headers) {
+  return getSession(headers, "__admin_session");
 }
 
 function parseCookie(cookieHeader: string, name: string): string | null {
