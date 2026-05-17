@@ -29,22 +29,17 @@ export async function proxy(request: NextRequest) {
   const isAdminPath =
     pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 
-  // The admin session endpoint must be reachable without the header or a
-  // session so the login form can POST/DELETE from the browser.
-  const isAdminSessionEndpoint = pathname === "/api/admin/auth/session";
-
-  if (isAdminPath && !isAdminSessionEndpoint) {
+  // X-Admin-Header guard applies only to /admin page routes, not API routes.
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const secret = process.env.ADMIN_HEADER_SECRET;
     const adminHeader = request.headers.get("x-admin");
     if (!secret || adminHeader !== secret) {
-      if (pathname.startsWith("/api/")) {
-        return new Response(null, { status: 404 });
-      }
       return NextResponse.rewrite(new URL("/_not-found", request.url));
     }
   }
 
-  // Skip session check for the login page and the session endpoint itself.
+  // Skip session check for the login page and the admin session endpoint.
+  const isAdminSessionEndpoint = pathname === "/api/admin/auth/session";
   const isAdminLoginPage = pathname === "/admin/login";
   if (!isAdminLoginPage && !isAdminSessionEndpoint) {
     const cookieName = isAdminPath ? "__admin_session" : "__session";
